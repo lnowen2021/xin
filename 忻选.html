@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>忻选 - 帮我选！</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #fef5f0 0%, #fce4d6 30%, #fde8f0 60%, #fef5f0 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.container {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* 程序名 */
+.app-name {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #e8879b;
+  letter-spacing: 6px;
+  margin-bottom: 4px;
+  font-family: "STKaiti", "KaiTi", "楷体", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
+  text-shadow: 0 1px 3px rgba(232, 135, 155, 0.2);
+}
+
+/* 标题 */
+.title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #e07a5f;
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+}
+
+.title .emoji {
+  font-size: 26px;
+}
+
+/* 选项卡片 */
+.card {
+  background: #fffbf7;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(228, 140, 120, 0.12);
+}
+
+/* 单个选项行 */
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #f5e0d0;
+}
+.option-row:last-child { border-bottom: none; }
+
+.option-index {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fde2d0;
+  color: #d4846a;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.option-input {
+  flex: 1;
+  min-width: 0;
+  border: 2px solid #f5e0d0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 15px;
+  color: #5c3d2e;
+  background: #fffaf6;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.option-input:focus {
+  border-color: #f0a5b0;
+}
+.option-input::placeholder {
+  color: #d4b8a8;
+}
+
+/* 星级选择器 */
+.stars {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.star {
+  font-size: 22px;
+  transition: transform 0.12s;
+}
+.star:active {
+  transform: scale(1.25);
+}
+.star.on  { color: #f59e0b; }
+.star.off { color: #d1d5db; }
+
+/* 删除按钮 */
+.btn-del {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: #fce4d6;
+  color: #d4846a;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.btn-del:hover { background: #f5c6a0; }
+.btn-del:active { background: #e8a880; }
+.btn-del:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* 添加按钮 */
+.btn-add {
+  width: 100%;
+  border: 2px dashed #f0c0a8;
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 15px;
+  color: #d4846a;
+  background: transparent;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-add:hover { background: #fff5ee; border-color: #e8a880; }
+.btn-add:active { background: #ffede0; }
+.btn-add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 抽签大按钮 */
+.btn-roll {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #f0a5b0 0%, #e07a5f 100%);
+  box-shadow: 0 4px 20px rgba(224, 122, 95, 0.35);
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.btn-roll:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 10px rgba(224, 122, 95, 0.25);
+}
+.btn-roll:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 底部提示 */
+.footer-note {
+  text-align: center;
+  font-size: 12px;
+  color: #c4a89a;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+/* ===== 结果弹窗 ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(80, 40, 30, 0.45);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.result-box {
+  background: #fffbf7;
+  border-radius: 24px;
+  padding: 32px 28px;
+  text-align: center;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 8px 40px rgba(224, 122, 95, 0.25);
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes popIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.result-emoji {
+  font-size: 48px;
+  margin-bottom: 8px;
+  animation: bounce 0.6s ease infinite alternate;
+}
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-8px); }
+}
+
+.result-label {
+  font-size: 16px;
+  color: #c4a090;
+  margin-bottom: 8px;
+}
+
+.result-text {
+  font-size: 32px;
+  font-weight: 800;
+  color: #e07a5f;
+  margin-bottom: 20px;
+  word-break: break-all;
+}
+
+.result-weight {
+  font-size: 13px;
+  color: #c4a090;
+  margin-bottom: 20px;
+}
+
+.btn-close {
+  padding: 10px 40px;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, #f0a5b0 0%, #e07a5f 100%);
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.btn-close:active { transform: scale(0.95); }
+
+/* 闪烁高亮 */
+.option-row.flash {
+  animation: flashHighlight 0.15s ease;
+}
+@keyframes flashHighlight {
+  0%   { background: #fef5f0; }
+  50%  { background: #ffe0c8; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); border-radius: 10px; }
+  100% { background: #fef5f0; }
+}
+
+.option-row.winner {
+  background: #fff3e0 !important;
+  border-radius: 10px;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.55);
+  transition: all 0.3s ease;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="app-name">🌸 忻 选 🌸</div>
+  <div class="title"><span class="emoji">✨</span> 帮我选！</div>
+
+  <div class="card" id="optionList"></div>
+
+  <button class="btn-add" id="btnAdd" onclick="addOption()">+ 添加选项</button>
+  <button class="btn-roll" id="btnRoll" onclick="doRoll()">🎲 帮我选！</button>
+
+  <div class="footer-note">权重越高 = 被抽中的概率越大 · 刷新页面重置</div>
+</div>
+
+<div class="overlay" id="overlay" style="display:none;" onclick="if(event.target===this)closeResult()">
+  <div class="result-box">
+    <div class="result-emoji">🎉</div>
+    <div class="result-label">恭喜你！选中了</div>
+    <div class="result-text" id="resultText"></div>
+    <div class="result-weight" id="resultWeight"></div>
+    <button class="btn-close" onclick="closeResult()">好的！</button>
+  </div>
+</div>
+
+<script>
+const MAX_OPTIONS = 20;
+const MIN_OPTIONS = 1;
+
+let options = [];
+
+function createOption(text, weight) {
+  return { id: Date.now() + Math.random(), text: text || '', weight: weight || 3 };
+}
+
+function save() {
+  const data = options.map(o => ({ text: o.text, weight: o.weight }));
+  localStorage.setItem('xx_options', JSON.stringify(data));
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('xx_options');
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length > 0) {
+        options = arr.map(o => createOption(o.text, o.weight));
+        return;
+      }
+    }
+  } catch (_) {}
+  // 默认 3 个选项
+  options = [
+    createOption('', 3),
+    createOption('', 3),
+    createOption('', 3),
+  ];
+}
+
+function render() {
+  const list = document.getElementById('optionList');
+  const btnAdd = document.getElementById('btnAdd');
+  const btnRoll = document.getElementById('btnRoll');
+
+  const canDelete = options.length > MIN_OPTIONS;
+  const canAdd = options.length < MAX_OPTIONS;
+
+  list.innerHTML = options.map((o, i) => `
+    <div class="option-row" id="row-${o.id}">
+      <div class="option-index">${i + 1}</div>
+      <input
+        class="option-input"
+        type="text"
+        placeholder="选项内容"
+        value="${escapeHtml(o.text)}"
+        oninput="updateText(${o.id}, this.value)"
+      >
+      <div class="stars" onclick="cycleWeight(event, ${o.id})" title="权重 ${o.weight} 星">
+        ${[1,2,3,4,5].map(s => `<span class="star ${s <= o.weight ? 'on' : 'off'}">${s <= o.weight ? '★' : '☆'}</span>`).join('')}
+      </div>
+      <button class="btn-del" ${canDelete ? '' : 'disabled'} onclick="deleteOption(${o.id})" title="删除">×</button>
+    </div>
+  `).join('');
+
+  btnAdd.disabled = !canAdd;
+  btnAdd.textContent = canAdd ? '+ 添加选项' : `已达上限 (${MAX_OPTIONS})`;
+
+  btnRoll.disabled = options.length < MIN_OPTIONS;
+
+  save();
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function updateText(id, value) {
+  const opt = options.find(o => o.id === id);
+  if (opt) {
+    opt.text = value;
+    save();
+  }
+}
+
+function cycleWeight(event, id) {
+  const starEls = event.currentTarget.querySelectorAll('.star');
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const starWidth = rect.width / 5;
+  const clickedStar = Math.ceil(x / starWidth);
+  const newWeight = Math.max(1, Math.min(5, clickedStar));
+
+  const opt = options.find(o => o.id === id);
+  if (opt) {
+    opt.weight = newWeight;
+    render();
+  }
+}
+
+function addOption() {
+  if (options.length >= MAX_OPTIONS) return;
+  options.push(createOption('', 3));
+  render();
+  const lastRow = document.querySelector('.option-row:last-child .option-input');
+  if (lastRow) lastRow.focus();
+}
+
+function deleteOption(id) {
+  if (options.length <= MIN_OPTIONS) return;
+  options = options.filter(o => o.id !== id);
+  render();
+}
+
+/* ===== 加权随机抽签 ===== */
+function weightedRandom() {
+  const total = options.reduce((sum, o) => sum + o.weight, 0);
+  let roll = Math.random() * total;
+  for (let i = 0; i < options.length; i++) {
+    roll -= options[i].weight;
+    if (roll <= 0) return i;
+  }
+  return options.length - 1;
+}
+
+async function doRoll() {
+  const filled = options.filter(o => o.text.trim() !== '');
+  if (filled.length === 0) {
+    alert('请至少填写一个选项内容哦~');
+    return;
+  }
+
+  const btnRoll = document.getElementById('btnRoll');
+  const btnAdd  = document.getElementById('btnAdd');
+  btnRoll.disabled = true;
+  btnAdd.disabled = true;
+
+  const winnerIndex = weightedRandom();
+  const allRows = document.querySelectorAll('.option-row');
+
+  // 闪烁阶段：随机高亮约 1.2 秒
+  const flashDuration = 1200;
+  const flashInterval = 100;
+  const flashes = Math.floor(flashDuration / flashInterval);
+  const indices = Array.from({ length: options.length }, (_, i) => i);
+
+  for (let i = 0; i < flashes; i++) {
+    // 随机选一个高亮
+    const ri = indices[Math.floor(Math.random() * indices.length)];
+    const row = allRows[ri];
+    row.classList.add('flash');
+    await sleep(flashInterval);
+    row.classList.remove('flash');
+  }
+
+  // 定格在 winner
+  allRows[winnerIndex].classList.add('winner');
+
+  await sleep(400);
+
+  // 显示结果弹窗
+  const winner = options[winnerIndex];
+  document.getElementById('resultText').textContent = winner.text || '(空选项)';
+  document.getElementById('resultWeight').textContent =
+    `权重 ${winner.weight} 星 · 共 ${options.length} 个选项中脱颖而出`;
+  document.getElementById('overlay').style.display = 'flex';
+
+  // 恢复
+  allRows[winnerIndex].classList.remove('winner');
+  btnRoll.disabled = false;
+  btnAdd.disabled = options.length >= MAX_OPTIONS;
+}
+
+function closeResult() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+/* ===== 启动 ===== */
+load();
+render();
+</script>
+
+</body>
+</html>
